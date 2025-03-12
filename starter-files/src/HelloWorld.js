@@ -11,34 +11,75 @@ import {
 import alchemylogo from "./alchemylogo.svg";
 
 const HelloWorld = () => {
-  //state variables
   const [walletAddress, setWallet] = useState("");
   const [status, setStatus] = useState("");
-  const [message, setMessage] = useState("No connection to the network."); //default message
+  const [message, setMessage] = useState("No connection to the network.");
   const [newMessage, setNewMessage] = useState("");
 
-  //called only once
-  useEffect(async () => {
-    
+  //called only once (empty brackets as second argument)
+  useEffect(() => {
+    async function fetchMessage() {
+      const message = await loadCurrentMessage();
+      setMessage(message);
+    }        
+    fetchMessage();
+    addSmartContractListener();
+
+    async function fetchWallet() {
+      const {address, status} = await getCurrentWalletConnected();
+      setWallet(address);
+      setStatus(status); 
+    }
+    fetchWallet();
+    addWalletListener(); 
   }, []);
 
-  function addSmartContractListener() { //TODO: implement
-    
+  function addSmartContractListener() {
+    helloWorldContract.events.UpdatedMessages({}, (error, data) => {
+      if (error) {
+        setStatus("Sorry," + error.message);
+      } else {
+        setMessage(data.returnValues[1]);
+        setNewMessage("");
+        setStatus("Nice, your message has been updated!");
+      }
+    });
   }
 
-  function addWalletListener() { //TODO: implement
-    
+  function addWalletListener() { 
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", (accounts) => {
+        if (accounts.length > 0) {
+          setWallet(accounts[0]);
+          setStatus("Write a message in the text-field above.");
+        } else {
+          setWallet("");
+          setStatus("Connect to Metamask using the top right button.");
+        }
+      });
+    } else {
+      setStatus(
+        <p>
+          {" "}
+          <a target="_blank" rel="noopener noreferrer" href={`https://metamask.io/download`}>
+            You must install Metamask, a virtual Ethereum wallet, in your
+            browser.
+          </a>
+        </p>
+      );
+    }
   }
 
-  const connectWalletPressed = async () => { //TODO: implement
+  const connectWalletPressed = async () => {
+    const walletResponse = await connectWallet();
+    setStatus(walletResponse.status);
+    setWallet(walletResponse.address);
+  };
+
+  const onUpdatePressed = async () => {
     
   };
 
-  const onUpdatePressed = async () => { //TODO: implement
-    
-  };
-
-  //the UI of our component
   return (
     <div id="container">
       <img id="logo" src={alchemylogo}></img>

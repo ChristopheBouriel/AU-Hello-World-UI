@@ -91,5 +91,48 @@ export const getCurrentWalletConnected = async () => {
 };
 
 export const updateMessage = async (address, message) => {
+    if (!window.ethereum || address === null) {
+        return {
+          status:
+            "Connect your Metamask wallet to update the message on the blockchain.",
+        };
+    }
     
+    if (message.trim() === "") {
+        return {
+          status: "Your message cannot be an empty string.",
+        };
+    }
+
+    //set up transaction parameters
+    const transactionParameters = {
+        to: contractAddress,
+        from: address,
+        data: helloWorldContract.methods.update(message).encodeABI(),
+    };
+
+    //sign the transaction
+    try {
+        const txHash = await window.ethereum.request({
+            method: "eth_sendTransaction",
+            params: [transactionParameters],
+        });
+        return {
+            status: (
+                <span>
+                {"Ok "}
+                <a target="_blank" rel="noopener noreferrer" href={`https://sepolia.etherscan.io/tx/${txHash}`}>
+                    View the status of your transaction on Etherscan!
+                </a>
+                <br />
+                Once the transaction is verified by the network, the message will
+                be updated automatically.
+                </span>
+            ),
+        };
+    } catch (error) {
+        return {
+            status: "Sorry, " + error.message,
+        };
+    }
 };

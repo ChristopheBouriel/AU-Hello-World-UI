@@ -77,7 +77,8 @@ const HelloWorld = () => {
   };
 
   const onUpdatePressed = async () => {
-    
+    const { status } = await updateMessage(walletAddress, newMessage);
+    setStatus(status);
   };
 
   return (
